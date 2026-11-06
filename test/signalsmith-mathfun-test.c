@@ -4,12 +4,13 @@ Tests mathfun.h using plain scalars, checking each function is no more than 1 bi
 
 	gcc -std=c99 mathfun-test.c -o mathfun-test && ./mathfun-test
 
-Optional ops can be switched on to test their routes:
+Optional ops can be switched on to test their routes (both for using them, and the fallback when not present):
 	TEST_ROUND: uses rint for SSMF_VF_ROUND
 	TEST_ROUND_INT32: bounces through int32 for SSMF_VF_ROUND (like SSE2's cvtps2dq/cvtdq2ps) - actually only worth using for float, but we test double as well
 	TEST_FLOOR: SSMF_VF_FLOOR (floor)
 	TEST_BARRIER: SSMF_VF_BARRIER (empty `asm` block, GCC/Clang only)
-	TEST_FMA: SSMF_VF_FMA (fma)
+	TEST_FMA: defines SSMF_VF_FMA (fma)
+	TEST_SQRT: defines SSMF_VF_SQRT by calling through to the <math.h> version
 	TEST_LOGEXP / TEST_LOGEXP2: uses a reference log/exp, to test conversion between bases
 	TEST_SMALL_INPUTS: skips SSMF_FULL_RANGE, and only tests inputs within SMALL_INPUTS_MAX
 */
