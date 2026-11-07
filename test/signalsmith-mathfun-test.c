@@ -521,7 +521,8 @@ static inline double double_nextUp(double x) {return nextafter(x, SWEEP_MAX(doub
 		} \
 		endCheck(); \
 		startCheck("exp2"); \
-		RANGE_LINEAR(T, x, -EXP2_MAX(T), EXP2_MAX(T)) { \
+		/* starts just above -EXP2_MAX, because exp(v*ln2) can round to just below the smallest normal there (and then get flushed to 0) */ \
+		RANGE_LINEAR(T, x, -EXP2_MAX(T) + (T)0.001, EXP2_MAX(T)) { \
 			test(x, exp2l(x), T##_test_exp2(x)); \
 		} \
 		RANGE_LINEAR(T, x, -2, 2) { \
