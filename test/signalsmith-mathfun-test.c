@@ -11,6 +11,7 @@ Optional ops can be switched on to test their routes (both for using them, and t
 	TEST_BARRIER: SSMF_VF_BARRIER (empty `asm` block, GCC/Clang only)
 	TEST_FMA: defines SSMF_VF_FMA (fma)
 	TEST_SQRT: defines SSMF_VF_SQRT by calling through to the <math.h> version
+	TEST_RSQRT_ESTIMATE: defines SSMF_VF_RSQRT_EST as the <math.h> version truncated to 11 bits (with SSMF_RSQRT_ESTIMATE_BITS 11)
 	TEST_LOGEXP / TEST_LOGEXP2: uses a reference log/exp, to test conversion between bases
 	TEST_SMALL_INPUTS: skips SSMF_FULL_RANGE, and only tests inputs within SMALL_INPUTS_MAX
 	TEST_LITERAL_SUFFIX: SSMF_VF_F() appends `L` to its literal (as a wider type might), with a separate SSMF_VF_FE() for expressions
@@ -57,6 +58,9 @@ Optional ops can be switched on to test their routes (both for using them, and t
 #	endif
 #	if (PRNG4&512)
 #		define TEST_LITERAL_SUFFIX
+#	endif
+#	if (PRNG4&1024)
+#		define TEST_RSQRT_ESTIMATE
 #	endif
 
 #	undef PRNG1
@@ -200,6 +204,10 @@ static uint32_t floatAsInt(float f) {
 #	ifdef TEST_SQRT
 #		define SSMF_VF_SQRT(v) sqrtf(v)
 #	endif
+#	ifdef TEST_RSQRT_ESTIMATE
+#		define SSMF_VF_RSQRT_EST(v) intAsFloat(floatAsInt(1.0f/sqrtf(v))&0xFFFFF000u) // keep 11 mantissa bits
+#		define SSMF_RSQRT_EST_BITS 11
+#	endif
 #	ifndef TEST_SMALL_INPUTS
 #		define SSMF_FULL_RANGE
 #	endif
@@ -265,6 +273,10 @@ static uint64_t doubleAsInt(double d) {
 #endif
 #ifdef TEST_SQRT
 #	define SSMF_VF_SQRT(v) sqrt(v)
+#endif
+#ifdef TEST_RSQRT_ESTIMATE
+#	define SSMF_VF_RSQRT_EST(v) intAsDouble(doubleAsInt(1.0/sqrt(v))&0xFFFFFE0000000000u) // keep 11 mantissa bits
+#	define SSMF_RSQRT_EST_BITS 11
 #endif
 #ifndef TEST_SMALL_INPUTS
 #	define SSMF_FULL_RANGE
@@ -489,6 +501,11 @@ static inline double double_nextUp(double x) {return nextafter(x, SWEEP_MAX(doub
 		test(0, 0, T##_test_sqrt(0)); \
 		RANGE_EXP(T, x, SWEEP_MIN(T), LARGE_MAX(T)) { \
 			test(x, sqrtl(x), T##_test_sqrt(x)); \
+		} \
+		endCheck(); \
+		startCheck("rsqrt"); \
+		RANGE_EXP(T, x, SWEEP_MIN(T), LARGE_MAX(T)) { \
+			test(x, 1/sqrtl(x), T##_test_rsqrt(x)); \
 		} \
 		endCheck(); \
 		startCheck("hypot"); \
@@ -801,6 +818,9 @@ int main(void) {
 #endif
 #ifdef TEST_LITERAL_SUFFIX
 		" LITERAL_SUFFIX"
+#endif
+#ifdef TEST_RSQRT_ESTIMATE
+		" RSQRT_ESTIMATE"
 #endif
 #ifdef __FAST_MATH__
 		" (fast-math)"
