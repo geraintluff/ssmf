@@ -148,11 +148,11 @@ If you re-use any of these approximations, attribution would be nice, but isn't 
 #ifndef SSMF_VF
 #	error "SSMF_VF not defined"
 #endif
-#ifndef SSMF_VF_0
-#	error "SSMF_VF_0 not defined"
-#endif
 #ifndef SSMF_VF_F
 #	error "SSMF_VF_F() not defined"
+#endif
+#ifndef SSMF_VF_0
+#	define SSMF_VF_0 SSMF_VF_F(0.0)
 #endif
 #ifndef SSMF_VF_I
 #	error "SSMF_VF_I() not defined"
@@ -235,6 +235,9 @@ If you re-use any of these approximations, attribution would be nice, but isn't 
 #		define SSMF_INLINE static inline
 #	endif
 #endif
+
+#define SSMF_C_1_3 SSMF_VF_F(0.3333333333333333333333333333333333333333)
+#define SSMF_C_2_3 SSMF_VF_F(0.6666666666666666666666666666666666666667)
 
 // Polynomials (Horner's method) with constant coefficients
 #define SSMF_VF_POLY0(x, c0) SSMF_VF_F(c0)
@@ -482,13 +485,13 @@ SSMF_ATTRIBUTES SSMF_INLINE SSMF_VF SSMF_NAME(cbrt)(SSMF_VF v) {
 	const int stepCount = (SSMF_ACCURACY >= 7) + (SSMF_ACCURACY >= 15) + (SSMF_ACCURACY >= 30);
 	for (int step = 0; step < stepCount; ++step) {
 		SSMF_VF wrong = SSMF_VF_FMAK(SSMF_NAME(neg)(SSMF_NAME(abs)(SSMF_VF_MUL(v, y))), SSMF_VF_MUL(y, y), 1.0);
-		y = SSMF_VF_FMA(y, SSMF_VF_MUL(wrong, SSMF_VF_F(0.3333333333333333333333333333333333333333)), y);
+		y = SSMF_VF_FMA(y, SSMF_VF_MUL(wrong, SSMF_C_1_3), y);
 	}
 	// Final step has different coefficients because we're doing it upside-down
 	SSMF_VF vy = SSMF_VF_MUL(v, y);
 	SSMF_VF wrong = SSMF_VF_FMAK(SSMF_NAME(neg)(SSMF_NAME(abs)(vy)), SSMF_VF_MUL(y, y), 1.0);
 	SSMF_VF result = SSMF_VF_MUL(vy, y);
-	return SSMF_VF_FMA(result, SSMF_VF_MUL(wrong, SSMF_VF_F(0.6666666666666666666666666666666666666667)), result);
+	return SSMF_VF_FMA(result, SSMF_VF_MUL(wrong, SSMF_C_2_3), result);
 #endif
 }
 
@@ -530,7 +533,7 @@ SSMF_ATTRIBUTES SSMF_INLINE SSMF_VF SSMF_NAME(hypot)(SSMF_VF a, SSMF_VF b) {
 
 // Minimax fits of log2((1+m)/2)/(m-1) for m in [0.5, 2).  We multiply by (m-1) to get good results near 0.
 #if SSMF_ACCURACY <= 2 // 2.3 bits
-#	define SSMF_VF_LOG2_CURVE(mantissa, mantissaM1) SSMF_VF_MUL(mantissaM1, SSMF_VF_F(0.6666666666666666666666666666666666666667))
+#	define SSMF_VF_LOG2_CURVE(mantissa, mantissaM1) SSMF_VF_MUL(mantissaM1, SSMF_C_2_3)
 #elif SSMF_ACCURACY <= 5 // 5.14 bits
 #	define SSMF_VF_LOG2_CURVE(mantissa, mantissaM1) SSMF_VF_MUL(mantissaM1, SSMF_VF_POLY1(mantissa, 0.9117791645031981223054498348232171403872, -0.1634083318910209704258554454377003158137))
 #elif SSMF_ACCURACY <= 8 // 8.46 bits
