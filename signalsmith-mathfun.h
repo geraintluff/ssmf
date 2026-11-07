@@ -103,12 +103,11 @@ Each candidate shape is given a rule-of-thumb "complexity" metric:
 * +1 for y² on the output, or multiplying by x
 * +2 for multiplying the output by |x|
 
-The best fit for each "complexity" is kept, and then they are chosen at compile-time based on the requested accuracy in bits (i.e. `log2(error)`).
+Sometimes the function actually fitted is a variant which already handles some features, and this is noted in the comments.  For example tan() flies off to infinity, so we actually fit `tan(πf)(1 - 2f)(1 + 2f)/f`, which is finite and non-negative everywhere.  Inverse-trig functions (acos/asin/atan) needed some sqrt() terms, and for `tanh` and `erf` I stretched the target function so it ends on ±1 at the edge of the fitted region.
 
-Sometimes the function actually fitted is some variant which already handles some features (like poles, or zeros where we want to maintain accuracy), for example instead of matching tan() directly, we match `tan(πf)(1 - 2f)(1 + 2f)/f` which is finite and non-negative everywhere.  These are noted in the comments.
+The best fit for each "complexity" is kept, with its measured accuracy in bits (`-log2(error/abs(value)`), usually).  The fit is selected at compile-time based on SSMF_ACCURACY.  The theoretical fit accuracy should be in a comment next to it, but that was computed with more accuracy than `double` (using Python's "mpmath").
 
 If you re-use any of these approximations, attribution would be nice, but isn't strictly required.
-
 */
 
 #ifndef SSMF_NAME
