@@ -718,7 +718,12 @@ static inline double double_nextUp(double x) {return nextafter(x, SWEEP_MAX(doub
 			assertCheck(y <= (T)1.5707963267948966 && yNeg >= -(T)1.5707963267948966, x, atanl(x), y); \
 		} \
 		endCheck(); \
-		startCheck("atan2"); /* all four quadrants and the axes, everything except (0, 0) */ \
+		startCheck("atan2"); /* all four quadrants and the axes */ \
+		test(0, 0, T##_test_atan2(0, 0)); \
+		{ /* (0, -0) gives π without fast-math, but fast-math doesn't preserve the sign of zero, so we accept either */ \
+			T zeroNeg = T##_test_atan2(0, -(T)0); \
+			assertCheck(zeroNeg == 0 || zeroNeg == (T)SSMF_TEST_PI, 0, SSMF_TEST_PI, zeroNeg); \
+		} \
 		RANGE_EXP(T, x, SMALL_INPUTS_MIN(T), SMALL_INPUTS_MAX(T)) { \
 			const T ratios[] = {0, (T)1e-6, (T)0.001, (T)0.3, (T)0.75, 1}; \
 			for (int r = 0; r < 6; ++r) { \
