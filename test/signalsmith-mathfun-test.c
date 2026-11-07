@@ -11,7 +11,7 @@ Optional ops can be switched on to test their routes (both for using them, and t
 	TEST_BARRIER: SSMF_VF_BARRIER (empty `asm` block, GCC/Clang only)
 	TEST_FMA: defines SSMF_VF_FMA (fma)
 	TEST_SQRT: defines SSMF_VF_SQRT by calling through to the <math.h> version
-	TEST_RSQRT_ESTIMATE: defines SSMF_VF_RSQRT_EST as the <math.h> version truncated to 11 bits (with SSMF_RSQRT_ESTIMATE_BITS 11)
+	TEST_RSQRT_ESTIMATE: defines SSMF_VF_RSQRT_EST as the <math.h> version truncated to 11 bits (with SSMF_RSQRT_EST_BITS 11)
 	TEST_LOGEXP / TEST_LOGEXP2: uses a reference log/exp, to test conversion between bases
 	TEST_SMALL_INPUTS: skips SSMF_FULL_RANGE, and only tests inputs within SMALL_INPUTS_MAX
 	TEST_LITERAL_SUFFIX: SSMF_VF_F() appends `L` to its literal (as a wider type might), with a separate SSMF_VF_FE() for expressions

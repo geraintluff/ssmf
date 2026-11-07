@@ -72,7 +72,7 @@ Optional:
 	SSMF_VF_SQRT(v)
 	SSMF_VF_RSQRT(v): reciprocal, if that's faster
 	SSMF_VF_RSQRT_EST(v): approximate reciprocal, which rsqrt() then refines
-	SSMF_RSQRT_EST_BITS: starting accuracy (as bits, integer) of SSMF_VF_RSQRT_EST
+	SSMF_RSQRT_EST_BITS: starting accuracy (in bits, can be fractional, e.g. 11.4) of SSMF_VF_RSQRT_EST
 	SSMF_VF_HYPOT(a, b)
 	SSMF_VF_LOG2(v)
 	SSMF_VF_LOG(v)
@@ -760,12 +760,12 @@ SSMF_ATTRIBUTES SSMF_INLINE SSMF_VF SSMF_NAME(rsqrt)(SSMF_VF v) {
 	// Clamped so 0 gives a finite estimate (and then sqrt(0) = 0*rsqrt(0) = 0)
 	SSMF_VF invSqrt = SSMF_VF_RSQRT_EST(SSMF_VF_MAX(v, SSMF_VF_FE(SSMF_MIN_NORMAL*2.0)));
 #	elif SSMF_BITS == 32
-#		define SSMF_RSQRT_EST_BITS 4 // actually 4.6, but be conservative
+#		define SSMF_RSQRT_EST_BITS 4.6
 	SSMF_VF invSqrt = SSMF_VF_RSHIFT_K(SSMF_VF_NOT(SSMF_VF_MAX(v, SSMF_VF_F(2.3509887e-38))), 1);
 	// exponent bias is 127, right-shift approximately halves that (but with truncation)
 	invSqrt = SSMF_VF_MUL(invSqrt, SSMF_VF_F(1.83523129466333e-20)); // 2^-65.5626 (minimax scale for this seed: 4.6 bits)
 #	elif SSMF_BITS == 64
-#		define SSMF_RSQRT_EST_BITS 4
+#		define SSMF_RSQRT_EST_BITS 4.6
 	SSMF_VF invSqrt = SSMF_VF_RSHIFT_K(SSMF_VF_NOT(SSMF_VF_MAX(v, SSMF_VF_F(4.450147717014403e-308))), 1);
 	invSqrt = SSMF_VF_MUL(invSqrt, SSMF_VF_F(2.524949804293825e-155)); // 2^-513.5626
 #	else
@@ -777,8 +777,8 @@ SSMF_ATTRIBUTES SSMF_INLINE SSMF_VF SSMF_NAME(rsqrt)(SSMF_VF v) {
 #	else
 	invSqrt = SSMF_NAME(abs)(invSqrt); // TODO: in the RSQRT_EST path, can the compiler know the sign and bypass this?
 #	endif
-	// Each step (roughly) doubles the accuracy
-	const int stepCount = (SSMF_ACCURACY > SSMF_RSQRT_EST_BITS) + (SSMF_ACCURACY > SSMF_RSQRT_EST_BITS*2) + (SSMF_ACCURACY > SSMF_RSQRT_EST_BITS*4) + (SSMF_ACCURACY > SSMF_RSQRT_EST_BITS*8);
+	// Each step takes the error e -> 1.5e^2, so b bits become 2b - 0.6 (e.g. 4.6 -> 8.6 -> 16.6 -> 32.6)
+	const int stepCount = (SSMF_ACCURACY > SSMF_RSQRT_EST_BITS) + (SSMF_ACCURACY > (SSMF_RSQRT_EST_BITS - 0.6)*2 + 0.6) + (SSMF_ACCURACY > (SSMF_RSQRT_EST_BITS - 0.6)*4 + 0.6) + (SSMF_ACCURACY > (SSMF_RSQRT_EST_BITS - 0.6)*8 + 0.6);
 	for (int step = 0; step < stepCount; ++step) {
 		// How wrong we are, squared.  We want this computed in a particular order so that huge inputs don't make invSqrt*invSqrt subnormal (which could be flushed to 0)
 #	ifdef SSMF_VF_BARRIER
