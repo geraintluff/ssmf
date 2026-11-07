@@ -13,6 +13,7 @@ Optional ops can be switched on to test their routes (both for using them, and t
 	TEST_SQRT: defines SSMF_VF_SQRT by calling through to the <math.h> version
 	TEST_LOGEXP / TEST_LOGEXP2: uses a reference log/exp, to test conversion between bases
 	TEST_SMALL_INPUTS: skips SSMF_FULL_RANGE, and only tests inputs within SMALL_INPUTS_MAX
+	TEST_LITERAL_SUFFIX: SSMF_VF_F() appends `L` to its literal (as a wider type might), with a separate SSMF_VF_FE() for expressions
 */
 #include <stdio.h>
 #include <stdint.h>
@@ -53,6 +54,9 @@ Optional ops can be switched on to test their routes (both for using them, and t
 #	endif
 #	if (PRNG4&256)
 #		define TEST_SMALL_INPUTS
+#	endif
+#	if (PRNG4&512)
+#		define TEST_LITERAL_SUFFIX
 #	endif
 
 #	undef PRNG1
@@ -141,7 +145,12 @@ static inline double testBarrierD(double v) {
 #	define SSMF_BITS 32
 #	define SSMF_VF float
 #	define SSMF_VF_0 0.0f
-#	define SSMF_VF_F(v) ((float)(v))
+#	ifdef TEST_LITERAL_SUFFIX
+#		define SSMF_VF_F(v) ((float)(v##L))
+#		define SSMF_VF_FE(e) ((float)(e))
+#	else
+#		define SSMF_VF_F(v) ((float)(v))
+#	endif
 static float intAsFloat(uint32_t i) {
 	float f;
 	memcpy(&f, &i, 4);
@@ -202,7 +211,12 @@ static uint32_t floatAsInt(float f) {
 #define SSMF_BITS 64
 #define SSMF_VF double
 #define SSMF_VF_0 0.0
-#define SSMF_VF_F(v) ((double)(v))
+#ifdef TEST_LITERAL_SUFFIX
+#	define SSMF_VF_F(v) ((double)(v##L))
+#	define SSMF_VF_FE(e) ((double)(e))
+#else
+#	define SSMF_VF_F(v) ((double)(v))
+#endif
 static double intAsDouble(uint64_t i) {
 	double d;
 	memcpy(&d, &i, 8);
@@ -784,6 +798,9 @@ int main(void) {
 #endif
 #ifndef TEST_SMALL_INPUTS
 		" FULL_RANGE"
+#endif
+#ifdef TEST_LITERAL_SUFFIX
+		" LITERAL_SUFFIX"
 #endif
 #ifdef __FAST_MATH__
 		" (fast-math)"
